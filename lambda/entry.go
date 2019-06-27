@@ -6,10 +6,14 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
-	"github.com/scaleway/scaleway-functions-goscaleway-functions-go/events"
+	"github.com/scaleway/scaleway-functions-go/events"
 )
+
+const defaultPort = 8080
 
 // FunctionHandler - Handler for Event
 type FunctionHandler func(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error)
@@ -18,8 +22,14 @@ type FunctionHandler func(req events.APIGatewayProxyRequest) (events.APIGatewayP
 // It takes care of wrapping the handler with an HTTP server, which receives requests when functions are triggered
 // And execute the handler after formatting the HTTP Request to an API Gateway Proxy Event
 func Start(handler FunctionHandler) {
+	portEnv := os.Getenv("PORT")
+	port, err := strconv.Atoi(portEnv)
+	if err != nil {
+		port = defaultPort
+	}
+
 	s := &http.Server{
-		Addr:           fmt.Sprintf(":%d", 8081),
+		Addr:           fmt.Sprintf(":%d", port),
 		ReadTimeout:    3 * time.Second,
 		WriteTimeout:   3 * time.Second,
 		MaxHeaderBytes: 1 << 20, // Max header of 1MB
