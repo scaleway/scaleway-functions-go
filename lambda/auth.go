@@ -32,9 +32,15 @@ func authenticate(req *http.Request) (err error) {
 		return
 	}
 
-	publicKey := os.Getenv("SCW_PUBLIC_KEY")
+	// Check that request holds an authentication token
+	requestToken := req.Header.Get("SCW_FUNCTIONS_TOKEN")
+	if requestToken == "" {
+		err = errors.New("Authentication token not present in the request's header")
+		return
+	}
 
-	// Check that encoded key may be parsed back to a valid RSA Private Key
+	// Retrieve Public Key used to parse JWT
+	publicKey := os.Getenv("SCW_PUBLIC_KEY")
 	block, _ := pem.Decode([]byte(publicKey))
 	parsedKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
 	if err != nil {
@@ -45,16 +51,11 @@ func authenticate(req *http.Request) (err error) {
 		return
 	}
 
-	requestToken := req.Header.Get("SCW_FUNCTIONS_TOKEN")
-	if requestToken == "" {
-		err = errors.New("Authentication token not present in the request's header")
-		return
-	}
-
+	// Parse JWT and retrieve claims
 	claims := jwt.MapClaims{}
 
 	_, err = jwt.ParseWithClaims(requestToken, claims, func(token *jwt.Token) (i interface{}, e error) {
-		return &parsedKey, nil
+		return parsedKey, nil
 	})
 	if err != nil {
 		return
@@ -76,6 +77,7 @@ func authenticate(req *http.Request) (err error) {
 	}
 	applicationClaims := parsedClaims[0]
 
+	// Check that the token's claims match with the injected Application or Namespace ID (depending on the scope of the token)
 	applicationID := os.Getenv("SCW_APPLICATION_ID")
 	namespaceID := os.Getenv("SCW_NAMESPACE_ID")
 
