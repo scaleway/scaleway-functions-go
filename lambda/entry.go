@@ -41,6 +41,14 @@ func Start(handler FunctionHandler) {
 
 func makeRequestHandler(handler FunctionHandler) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Authenticate function, if an error occurs, do not execute the handler
+		if err := authenticate(r); err != nil {
+			log.Print(err)
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(""))
+			return
+		}
+
 		var input string
 
 		if r.Body != nil {
