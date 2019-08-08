@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"log"
 	"net/http"
 	"os"
 
@@ -17,6 +18,20 @@ type ApplicationClaim struct {
 	NamespaceID   string `json:"namespace_id"`
 	ApplicationID string `json:"application_id"`
 }
+
+// Claims represents a custom JWT claims with a list of applications
+type Claims struct {
+	ApplicationsClaims []ApplicationClaim `json:"application_claim"`
+	jwt.StandardClaims
+}
+
+var (
+	errorInvalidClaims      = errors.New("Invalid Claims")
+	errorInvalidPublicKey   = errors.New("Invalid public key")
+	errorEmptyRequestToken  = errors.New("Authentication token was not provided in the request")
+	errorInvalidApplication = errors.New("Application ID was not provided")
+	errorInvalidNamespace   = errors.New("Namespace ID was not provided")
+)
 
 // Authenticate incoming request based on multiple factors:
 // - 1: Whether the function's privacy has been set to private, if public, just leave this middleware
@@ -35,19 +50,28 @@ func authenticate(req *http.Request) (err error) {
 	// Check that request holds an authentication token
 	requestToken := req.Header.Get("SCW_FUNCTIONS_TOKEN")
 	if requestToken == "" {
-		err = errors.New("Authentication token not present in the request's header")
+		err = errorEmptyRequestToken
 		return
 	}
 
 	// Retrieve Public Key used to parse JWT
 	publicKey := os.Getenv("SCW_PUBLIC_KEY")
-	block, _ := pem.Decode([]byte(publicKey))
-	parsedKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
-	if err != nil {
+	if publicKey == "" {
+		err = errorInvalidPublicKey
 		return
 	}
-	if parsedKey == nil {
-		err = errors.New("Invalid public key")
+
+	block, _ := pem.Decode([]byte(publicKey))
+	if block == nil {
+		err = errorInvalidPublicKey
+		return
+	}
+
+	parsedKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	if err != nil || parsedKey == nil {
+		// Print additional error
+		log.Print(err)
+		err = errorInvalidPublicKey
 		return
 	}
 
@@ -72,7 +96,7 @@ func authenticate(req *http.Request) (err error) {
 	}
 
 	if len(parsedClaims) == 0 {
-		err = errors.New("Invalid Claims")
+		err = errorInvalidClaims
 		return
 	}
 	applicationClaims := parsedClaims[0]
@@ -80,9 +104,16 @@ func authenticate(req *http.Request) (err error) {
 	// Check that the token's claims match with the injected Application or Namespace ID (depending on the scope of the token)
 	applicationID := os.Getenv("SCW_APPLICATION_ID")
 	namespaceID := os.Getenv("SCW_NAMESPACE_ID")
+	if applicationID == "" {
+		err = errorInvalidApplication
+		return
+	} else if namespaceID == "" {
+		err = errorInvalidNamespace
+		return
+	}
 
 	if applicationClaims.NamespaceID != namespaceID && applicationClaims.ApplicationID != applicationID {
-		err = errors.New("Invalid claims")
+		err = errorInvalidClaims
 	}
 	return
 }
