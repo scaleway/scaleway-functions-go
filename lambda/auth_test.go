@@ -194,7 +194,7 @@ func TestAuthenticate(t *testing.T) {
 		}
 	})
 
-	t.Run("claims ddo not match injected namespace ID", func(t *testing.T) {
+	t.Run("claims do not match injected namespace ID", func(t *testing.T) {
 		setUpEnvironmentVariables()
 		os.Setenv("SCW_NAMESPACE_ID", "another-namespace-id")
 		if err := testAuthentication(fixtureTokenNamespace, t); err != errorInvalidClaims {

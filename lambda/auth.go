@@ -101,7 +101,6 @@ func authenticate(req *http.Request) (err error) {
 	}
 	applicationClaims := parsedClaims[0]
 
-	// Check that the token's claims match with the injected Application or Namespace ID (depending on the scope of the token)
 	applicationID := os.Getenv("SCW_APPLICATION_ID")
 	namespaceID := os.Getenv("SCW_NAMESPACE_ID")
 	if applicationID == "" {
@@ -112,6 +111,7 @@ func authenticate(req *http.Request) (err error) {
 		return
 	}
 
+	// Check that the token's claims match with the injected Application or Namespace ID (depending on the scope of the token)
 	if applicationClaims.NamespaceID != namespaceID && applicationClaims.ApplicationID != applicationID {
 		err = errorInvalidClaims
 	}
