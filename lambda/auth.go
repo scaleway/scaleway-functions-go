@@ -50,29 +50,25 @@ func authenticate(req *http.Request) (err error) {
 	// Check that request holds an authentication token
 	requestToken := req.Header.Get("SCW_FUNCTIONS_TOKEN")
 	if requestToken == "" {
-		err = errorEmptyRequestToken
-		return
+		return errorEmptyRequestToken
 	}
 
 	// Retrieve Public Key used to parse JWT
 	publicKey := os.Getenv("SCW_PUBLIC_KEY")
 	if publicKey == "" {
-		err = errorInvalidPublicKey
-		return
+		return errorInvalidPublicKey
 	}
 
 	block, _ := pem.Decode([]byte(publicKey))
 	if block == nil {
-		err = errorInvalidPublicKey
-		return
+		return errorInvalidPublicKey
 	}
 
 	parsedKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
 	if err != nil || parsedKey == nil {
 		// Print additional error
 		log.Print(err)
-		err = errorInvalidPublicKey
-		return
+		return errorInvalidPublicKey
 	}
 
 	// Parse JWT and retrieve claims
@@ -96,19 +92,16 @@ func authenticate(req *http.Request) (err error) {
 	}
 
 	if len(parsedClaims) == 0 {
-		err = errorInvalidClaims
-		return
+		return errorInvalidClaims
 	}
 	applicationClaims := parsedClaims[0]
 
 	applicationID := os.Getenv("SCW_APPLICATION_ID")
 	namespaceID := os.Getenv("SCW_NAMESPACE_ID")
 	if applicationID == "" {
-		err = errorInvalidApplication
-		return
+		return errorInvalidApplication
 	} else if namespaceID == "" {
-		err = errorInvalidNamespace
-		return
+		return errorInvalidNamespace
 	}
 
 	// Check that the token's claims match with the injected Application or Namespace ID (depending on the scope of the token)
