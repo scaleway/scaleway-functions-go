@@ -71,7 +71,7 @@ func makeRequestHandler(handler Handler) func(res http.ResponseWriter, req *http
 		// Transform event to []byte for later use
 		eventBytes, err := json.Marshal(runtimeReq.Event)
 		if err != nil {
-			handleResponse(res, http.StatusInternalServerError, []byte("fucked"))
+			handleResponse(res, http.StatusInternalServerError, []byte("Error during event encoding to JSON"))
 			return
 		}
 
