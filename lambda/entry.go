@@ -86,7 +86,6 @@ func makeRequestHandler(handler Handler) func(res http.ResponseWriter, req *http
 
 		handleResponse(res, http.StatusOK, response)
 	}
-
 }
 
 func handleResponse(res http.ResponseWriter, statusCode int, message []byte) {
