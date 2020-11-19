@@ -40,8 +40,8 @@ func StartHandler(handler Handler) {
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf(":%d", port),
-		ReadTimeout:    3 * time.Second,
-		WriteTimeout:   3 * time.Second,
+		ReadTimeout:    30 * time.Second,
+		WriteTimeout:   30 * time.Second,
 		MaxHeaderBytes: 1 << 20, // Max header of 1MB
 	}
 
