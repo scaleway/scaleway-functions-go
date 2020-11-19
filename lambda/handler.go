@@ -53,7 +53,6 @@ func NewHandler(handlerFunc interface{}) Handler {
 	}
 
 	return functionHandler(func(ctx context.Context, payload []byte) (interface{}, error) {
-
 		// construct arguments
 		var args []reflect.Value
 		if (handlerType.NumIn() == 1) || handlerType.NumIn() == 2 {

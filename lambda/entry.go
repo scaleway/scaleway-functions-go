@@ -1,6 +1,7 @@
 package lambda
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -76,7 +77,7 @@ func makeRequestHandler(handler Handler) func(res http.ResponseWriter, req *http
 		}
 
 		// Invoke function Handler
-		response, err := handler.Invoke(nil, eventBytes)
+		response, err := handler.Invoke(context.Background(), eventBytes)
 		if err != nil {
 			errorMessage := fmt.Sprintf("An error occured during handler execution: %v", err)
 			handleResponse(res, http.StatusInternalServerError, []byte(errorMessage))
